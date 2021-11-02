@@ -4,7 +4,6 @@ from flask_cors import CORS, cross_origin
 from flask.views import View
 from flask_jwt_extended import JWTManager
 from flask_sqlalchemy import SQLAlchemy
-
 from routes.login import Login
 
 app = Flask(__name__)
@@ -19,9 +18,8 @@ app.config["SQLALCHEMY_DATABASE_URI"] = 'sqlite:///qresent.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
 api = Api(app)
-
 db = SQLAlchemy(app)
-from models import Activitati, Materie, Prezenta_Activitate, User, user_prezenta
+from models import user_prezenta,Activitati, Materie, PrezentaActivitate, User
 db.create_all()
 
 class Home(Resource):
