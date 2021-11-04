@@ -48,7 +48,7 @@ class PrezentaActivitate(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     ora_generare = db.Column(db.String(100), nullable=False)
     id_activitate = db.Column(db.Integer, db.ForeignKey(
-        'activitati.id'), nullable=False)
+        'activitate.id'), nullable=False)
     data = db.Column(db.String(100), nullable=False)
 
     def __init__(self, ora_generare, data):
@@ -56,7 +56,7 @@ class PrezentaActivitate(db.Model):
         self.data = data
 
 
-class Activitati(db.Model):
+class Activitate(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     interval = db.Column(db.String(100), nullable=False)
     id_materie = db.Column(db.Integer, db.ForeignKey(
@@ -64,9 +64,9 @@ class Activitati(db.Model):
     zi = db.Column(db.String(100), nullable=False)
     grupa = db.Column(db.String(20), nullable=False)
     prezente = db.relationship(
-        'PrezentaActivitate', backref='activitati_univ', lazy=True)
+        'PrezentaActivitate', backref='activitate_univ', cascade="all,delete", lazy=True)
 
-    def __init__(self, interval, zi, grupa):
+    def __init__(self, interval, zi='', grupa=''):
         self.interval = interval
         self.zi = zi
         self.grupa = grupa
@@ -87,7 +87,7 @@ class Materie(db.Model):
     id_profesor = db.Column(db.Integer, foreign_key=True)
     nume = db.Column(db.String(100), nullable=False)
     activitati = db.relationship(
-        'Activitati', backref='materie_univ', lazy=True)
+        'Activitate', backref='materie_univ', lazy=True)
 
     def __init__(self, descriere=None, id_profesor=None, nume=None):
         self.descriere = descriere
@@ -109,11 +109,18 @@ class MaterieSchema(ma.Schema):
 
 class UserSchema(ma.Schema):
     class Meta:
-        fields = ("id","nume", "prenume", "rol", "parola",
+        fields = ("id", "nume", "prenume", "rol", "parola",
                   "email", "grupa", "prezente")
+        ordered = True
+
+
+class ActivitateSchema(ma.Schema):
+    class Meta:
+        fields = ("id", "interval", "zi", "grupa", "id_materie")
         ordered = True
 
 
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)
 materie_schema = MaterieSchema()
+activitate_schema = ActivitateSchema()
