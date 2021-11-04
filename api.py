@@ -21,7 +21,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
 api = Api(app)
 db = SQLAlchemy(app)
-from models import user_prezenta,Activitati, Materie, PrezentaActivitate, User
+from models import materie_schema,user_schema,users_schema, ActivitatiMaterieSchema, UserSchema, user_prezenta,MaterieSchema,Activitati, Materie, PrezentaActivitate, User
 db.create_all()
 
 class Home(Resource):
@@ -68,9 +68,113 @@ class Stats(Resource):
         return "Statistici"
 
 
+class MaterieView(Resource):
+    def post(self):
+        nume = request.json['nume'] if 'nume' in request.json else None
+        descriere = request.json['descriere'] if 'descriere' in request.json else None
+        if 'id_profesor' in  request.json:
+            profesor = User.query.filter(User.id == request.json['id_profesor']).one_or_none().id
+        else:
+            profesor=None
+        materie = Materie(nume=nume, descriere=descriere,id_profesor=profesor)
+        db.session.add(materie)
+        db.session.commit()
+        materie_schema = MaterieSchema()
+        return materie_schema.jsonify(materie)
+
+    def get(self):
+        materii = Materie.query.all()
+        response=[]
+        activitati_schema= ActivitatiMaterieSchema(many=True)
+        for materie in materii:
+            activitate_materie = Activitati.query.filter(Activitati.id_materie == materie.id)
+            response.append(
+                {
+                    'id': materie.id,
+                    'descriere': materie.descriere,
+                    'nume': materie.nume,
+                    'id_profesor': materie.id_profesor,
+                    'activitati' : activitati_schema.dump(activitate_materie)
+                }
+            )
+        return response, 200
+
+class MaterieDetail(Resource):
+    def get(self, materie_id):
+        materie = Materie.query.get_or_404(materie_id)
+        activitati_schema= ActivitatiMaterieSchema(many=True)
+        activitate_materie = Activitati.query.filter(Activitati.id_materie == materie.id)
+        response = materie_schema.dump(materie)
+        response['activitati']=activitati_schema.dump(activitate_materie)
+        return response,200
+
+    def put(self, materie_id):
+        form_data = request.get_json()
+        errors = materie_schema.validate(form_data)
+        if errors:
+            return '',400
+        else:
+            data=materie_schema.load(form_data)
+            materie = Materie.query.get_or_404(materie_id)    
+            for key, value in data.items():
+                setattr(materie, key, value)
+            db.session.commit()
+            return materie_schema.jsonify(materie)
+
+
+    def delete(self,materie_id):
+        materie=Materie.query.get_or_404(materie_id)
+        db.session.delete(materie)
+        db.session.commit()
+        return '',204
+
+class UserView(Resource):
+    def get(self):
+        users = User.query.all()
+        return users_schema.jsonify(users)
+    
+    def post(self):
+        data=user_schema.load(request.get_json())
+        user=User()
+        for key, value in data.items():
+            setattr(user, key, value)
+        db.session.add(user)
+        db.session.commit()
+        return user_schema.jsonify(user)      
+
+class UserDetail(Resource):
+    def get(self,user_id):
+        user = User.query.get_or_404(user_id)
+        return user_schema.jsonify(user)
+
+    def put(self,user_id):
+        form_data = request.get_json()
+        errors = user_schema.validate(form_data)
+        if errors:
+            return '',400
+        else:
+            data=user_schema.load(form_data)
+            user = User.query.get_or_404(user_id)    
+            for key, value in data.items():
+                setattr(user, key, value)
+            db.session.commit()
+            return user_schema.jsonify(user)
+    
+    def delete(self,user_id):
+        user=User.query.get_or_404(user_id)
+        db.session.delete(user)
+        db.session.commit()
+        return '',204
+
+
+
 api.add_resource(Home, '/home')
 api.add_resource(Login, '/login')
 api.add_resource(Stats, '/stats')
+api.add_resource(MaterieView, '/materii')
+api.add_resource(MaterieDetail, '/materie/<int:materie_id>')
+api.add_resource(UserView,'/users')
+api.add_resource(UserDetail,'/user/<int:user_id>')
 
 
 if __name__ == '__main__':
