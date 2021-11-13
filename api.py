@@ -259,8 +259,33 @@ class Scan(Resource):
         db.session.commit()
         return 'Scanare cu succes!',200
 
+class ListaPrezenta(Resource):
+    """
+    Export to File
+
+    """
+    def get(self, activitate_id):
+        response={}
+        a = Activitate.query.get_or_404(activitate_id)
+        response['interval_activitate'] = a.interval
+        m = Materie.query.get_or_404(a.id_materie)
+        response['materie'] = m.nume
+        response['zi'] = a.zi
+        response['grupa'] = a.grupa
+        response['student'] = []
+        for activitate_prezenta in a.prezente:
+            student = {}
+            user = User.query.join(user_prezenta).join(PrezentaActivitate).filter((user_prezenta.c.user_id == User.id) & (user_prezenta.c.prezenta_id == activitate_prezenta.id)).first()
+            student['nume'] = user.nume + " " + user.prenume
+            student['email'] = user.email
+            student['ora_generare'] = activitate_prezenta.ora_generare
+            student['locatie'] = activitate_prezenta.locatie + "(lat: " + activitate_prezenta.lat + " long: " + activitate_prezenta.long + ")"
+            response['student'].append(student)
+        return response,200
+
 api.add_resource(Home, '/home')
 api.add_resource(Scan, '/scan')
+api.add_resource(ListaPrezenta, '/prezenta/<int:activitate_id>')
 api.add_resource(Login, '/login')
 api.add_resource(Stats, '/stats')
 api.add_resource(MaterieView, '/materii')

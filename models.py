@@ -26,7 +26,7 @@ class User(db.Model):
     grupa = db.Column(db.String(20), nullable=False)
     prezente = db.Column(db.String(100), nullable=False)
     prezenta_activ = db.relationship('PrezentaActivitate', secondary=user_prezenta, lazy='subquery',
-                                     backref=db.backref('useri', lazy=True))
+                                     backref=db.backref('useri', lazy='joined'))
 
     def __init__(self, nume='', prenume='', rol='', parola='', email='@stud.acs.pub.ro', grupa='', prezente=''):
         self.nume = nume
