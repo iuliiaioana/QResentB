@@ -187,6 +187,9 @@ class ActivitateView(Resource):
         return response, 200
     
     def post(self):
+        """
+        *Required request body: interval <hour:hour>, id_materie ! , zi, grupa
+        """
         data = request.get_json()
         try:
             data=activitate_schema.load(request.get_json())
