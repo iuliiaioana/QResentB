@@ -1,5 +1,7 @@
 from collections import defaultdict
-
+from datetime import datetime
+import requests
+import json
 from flask import Flask, request
 from flask_restful import Api, Resource
 from flask_cors import CORS, cross_origin
@@ -22,7 +24,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
 api = Api(app)
 db = SQLAlchemy(app)
-from models import Activitate,activitate_schema, materie_schema,user_schema,users_schema, ActivitatiMaterieSchema, UserSchema, user_prezenta,MaterieSchema,Activitate, Materie, PrezentaActivitate, User
+from models import Activitate,activitate_schema, user_prezenta, materie_schema,user_schema,users_schema, ActivitatiMaterieSchema, UserSchema, user_prezenta,MaterieSchema,Activitate, Materie, PrezentaActivitate, User
 db.create_all()
 
 class Home(Resource):
@@ -223,8 +225,39 @@ class ActivitateDetail(Resource):
         db.session.commit()
         return '',204
 
+class Scan(Resource):
+    """
+    *Required request body: activitate_id, user_id, ip : <public_ip of the user>
+
+    """
+    def post(self):
+        activitate=request.json['activitate_id']
+        user_id=request.json['user_id']
+        remote_ip=request.json['ip']
+        now = datetime.now()
+        zi=now.strftime("%d.%m.%Y")
+        ora=now.strftime("%H:%M")
+        # remote_ip='212.54.110.70'
+        # send_url = "http://api.ipstack.com/"+ remote_ip +"?access_key=12c83094abd6d5cdfb3c4956ed441b47"
+        # geo_req = requests.get(send_url)
+        # if geo_req.status_code==200: #The limit of the usage of the api is 100 requests/month
+        #     geo_json = json.loads(geo_req.text)
+        #     lat = geo_json['latitude']
+        #     long= geo_json['longitude']
+        #     oras = geo_json['city']
+        # else: 
+        lat= '44.44'
+        long= '26.09'
+        oras = 'Bucharest'
+        prez_act=PrezentaActivitate(ora_generare=ora,id_activitate=activitate, data=zi,locatie=oras, lat=lat, long=long)
+        db.session.add(prez_act)
+        user=User.query.get_or_404(user_id)
+        user.prezenta_activ.append(prez_act)
+        db.session.commit()
+        return 'Scanare cu succes!',200
 
 api.add_resource(Home, '/home')
+api.add_resource(Scan, '/scan')
 api.add_resource(Login, '/login')
 api.add_resource(Stats, '/stats')
 api.add_resource(MaterieView, '/materii')

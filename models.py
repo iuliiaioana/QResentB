@@ -50,10 +50,17 @@ class PrezentaActivitate(db.Model):
     id_activitate = db.Column(db.Integer, db.ForeignKey(
         'activitate.id'), nullable=False)
     data = db.Column(db.String(100), nullable=False)
+    locatie = db.Column(db.String(100), nullable=False, default='')
+    lat = db.Column(db.String(100), nullable=False, default='')
+    long = db.Column(db.String(100), nullable=False, default='')
 
-    def __init__(self, ora_generare, data):
+    def __init__(self, ora_generare, id_activitate, data, locatie, lat, long):
         self.ora_generare = ora_generare
         self.data = data
+        self.id_activitate = id_activitate
+        self.locatie = locatie
+        self.lat = lat
+        self.long = long
 
 
 class Activitate(db.Model):
