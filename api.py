@@ -230,28 +230,18 @@ class ActivitateDetail(Resource):
 
 class Scan(Resource):
     """
-    *Required request body: activitate_id, user_id, ip : <public_ip of the user>
+    *Required request body: activitate_id, user_id, location, lat, long
 
     """
     def post(self):
         activitate=request.json['activitate_id']
         user_id=request.json['user_id']
-        remote_ip=request.json['ip']
+        oras=request.json['location']
+        lat=request.json['lat']
+        long=request.json['long']
         now = datetime.now()
         zi=now.strftime("%d.%m.%Y")
         ora=now.strftime("%H:%M")
-        # remote_ip='212.54.110.70'
-        # send_url = "http://api.ipstack.com/"+ remote_ip +"?access_key=12c83094abd6d5cdfb3c4956ed441b47"
-        # geo_req = requests.get(send_url)
-        # if geo_req.status_code==200: #The limit of the usage of the api is 100 requests/month
-        #     geo_json = json.loads(geo_req.text)
-        #     lat = geo_json['latitude']
-        #     long= geo_json['longitude']
-        #     oras = geo_json['city']
-        # else: 
-        lat= '44.44'
-        long= '26.09'
-        oras = 'Bucharest'
         prez_act=PrezentaActivitate(ora_generare=ora,id_activitate=activitate, data=zi,locatie=oras, lat=lat, long=long)
         db.session.add(prez_act)
         user=User.query.get_or_404(user_id)
