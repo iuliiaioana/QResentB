@@ -230,13 +230,13 @@ class ActivitateDetail(Resource):
 
 class Scan(Resource):
     """
-    *Required request body: activitate_id, user_id, location, lat, long
+    *Required request body: activitate_id, user_id, locatie, lat, long
 
     """
     def post(self):
         activitate=request.json['activitate_id']
         user_id=request.json['user_id']
-        oras=request.json['location']
+        oras=request.json['locatie']
         lat=request.json['lat']
         long=request.json['long']
         now = datetime.now()
@@ -252,10 +252,12 @@ class Scan(Resource):
 class ListaPrezenta(Resource):
     """
     Export to File
+    *Required field: data : <selected_date> (make a get request-/data/<int:activitate_id>- to get all the dates and let user select a date)
 
     """
     def get(self, activitate_id):
         response={}
+        data_selectata=request.json['data']
         a = Activitate.query.get_or_404(activitate_id)
         response['interval_activitate'] = a.interval
         m = Materie.query.get_or_404(a.id_materie)
@@ -265,17 +267,28 @@ class ListaPrezenta(Resource):
         response['student'] = []
         for activitate_prezenta in a.prezente:
             student = {}
-            user = User.query.join(user_prezenta).join(PrezentaActivitate).filter((user_prezenta.c.user_id == User.id) & (user_prezenta.c.prezenta_id == activitate_prezenta.id)).first()
-            student['nume'] = user.nume + " " + user.prenume
-            student['email'] = user.email
-            student['ora_generare'] = activitate_prezenta.ora_generare
-            student['locatie'] = activitate_prezenta.locatie + "(lat: " + activitate_prezenta.lat + " long: " + activitate_prezenta.long + ")"
-            response['student'].append(student)
+            user = User.query.join(user_prezenta).join(PrezentaActivitate).filter((user_prezenta.c.user_id == User.id) & (user_prezenta.c.prezenta_id == activitate_prezenta.id) & (activitate_prezenta.data == data_selectata)).first()
+            if user:
+                student['nume'] = user.nume + " " + user.prenume
+                student['email'] = user.email
+                student['ora_generare'] = activitate_prezenta.ora_generare
+                student['locatie'] = activitate_prezenta.locatie + "(lat: " + activitate_prezenta.lat + " long: " + activitate_prezenta.long + ")"
+                response['student'].append(student)
+        return response,200
+
+class ListaPrezentaData(Resource):
+    """
+    Get all dates for a past activity
+    """
+    def get(self,activitate_id):
+        prezenta_zi=PrezentaActivitate.query.filter(PrezentaActivitate.id_activitate==activitate_id).group_by(PrezentaActivitate.data)
+        response=list(zi.data for zi in prezenta_zi)
         return response,200
 
 api.add_resource(Home, '/home')
 api.add_resource(Scan, '/scan')
 api.add_resource(ListaPrezenta, '/prezenta/<int:activitate_id>')
+api.add_resource(ListaPrezentaData, '/dati/<int:activitate_id>')
 api.add_resource(Login, '/login')
 api.add_resource(Stats, '/stats')
 api.add_resource(MaterieView, '/materii')
