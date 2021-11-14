@@ -1,5 +1,6 @@
 from collections import defaultdict
-from datetime import datetime
+import pandas as pd
+from datetime import datetime,timedelta
 import requests
 import json
 from flask import Flask, request
@@ -43,7 +44,7 @@ class Stats(Resource):
 
         start_treshold = (int(act.interval[3:5])- int(act.interval[0:2]))*6 # Primele minute care sunt csd "inceputul activitatii"
         end_treshold = (int(act.interval[3:5]) - int(act.interval[0:2]))*54 # Ultimele minute care sunt csd "sfarsitul activitatii"
-        minut_generare =  (int(prezenta_act.ora_generare[0:2])-int(act.interval[0:2]))*60 + int(prezenta_act.ora_generare[3:5])
+        minut_generare =  (int(prezenta_act.ora_validare[0:2])-int(act.interval[0:2]))*60 + int(prezenta_act.ora_validare[3:5])
 
         id_act = act.id
         if id_act not in stats_data.keys():
@@ -230,24 +231,29 @@ class ActivitateDetail(Resource):
 
 class Scan(Resource):
     """
-    *Required request body: activitate_id, user_id, locatie, lat, long
+    *Required request body: activitate_id, user_id, ora_qr <format:2021-11-14T17:13:53.883Z> 
+    optional: locatie, lat, long
 
     """
     def post(self):
         activitate=request.json['activitate_id']
+        date_format_str = '%Y-%m-%dT%H:%M:%S'
+        ora_qr_dt=pd.to_datetime(request.json['ora_qr'][:-1], format=date_format_str)
         user_id=request.json['user_id']
-        oras=request.json['locatie']
-        lat=request.json['lat']
-        long=request.json['long']
+        oras=request.json['locatie'] if 'locatie' in request.json else None
+        lat=request.json['lat'] if 'lat' in request.json else None
+        long=request.json['long'] if 'long' in request.json else None
         now = datetime.now()
         zi=now.strftime("%d.%m.%Y")
         ora=now.strftime("%H:%M")
-        prez_act=PrezentaActivitate(ora_generare=ora,id_activitate=activitate, data=zi,locatie=oras, lat=lat, long=long)
-        db.session.add(prez_act)
-        user=User.query.get_or_404(user_id)
-        user.prezenta_activ.append(prez_act)
-        db.session.commit()
-        return 'Scanare cu succes!',200
+        if (now-ora_qr_dt).total_seconds()/60<5: #mai mult de 5 min nu permitem scanarea
+            prez_act=PrezentaActivitate(ora_validare=ora,id_activitate=activitate, data=zi,locatie=oras, lat=lat, long=long)
+            db.session.add(prez_act)
+            user=User.query.get_or_404(user_id)
+            user.prezenta_activ.append(prez_act)
+            db.session.commit()
+            return 'Scanare cu succes!',200
+        return 'Scanare esuata!',403
 
 class ListaPrezenta(Resource):
     """
@@ -271,7 +277,7 @@ class ListaPrezenta(Resource):
             if user:
                 student['nume'] = user.nume + " " + user.prenume
                 student['email'] = user.email
-                student['ora_generare'] = activitate_prezenta.ora_generare
+                student['ora_validare'] = activitate_prezenta.ora_validare
                 student['locatie'] = activitate_prezenta.locatie + "(lat: " + activitate_prezenta.lat + " long: " + activitate_prezenta.long + ")"
                 response['student'].append(student)
         return response,200
@@ -284,9 +290,24 @@ class ListaPrezentaData(Resource):
         prezenta_zi=PrezentaActivitate.query.filter(PrezentaActivitate.id_activitate==activitate_id).group_by(PrezentaActivitate.data)
         response=list(zi.data for zi in prezenta_zi)
         return response,200
+        
+class GenerateQR(Resource):
+    def post(self):
+        profesor=request.json['profesor_id']
+        zi_dict={'Monday' : 'luni','Tuesday' : 'marti','Wednesday' : 'miercuri','Thursday' : 'joi','Friday' : 'vineri','Sunday' : 'duminica'}
+        now = datetime.now()
+        ora=now.strftime("%H")
+        ziua=zi_dict[now.strftime("%A")]
+        activitati= Activitate.query.filter((Activitate.id_materie == Materie.id) & (Materie.id_profesor == profesor) & (Activitate.zi == ziua)).all()
+        for act in activitati:
+            interval= str(act.interval).split(":")
+            if int(interval[0])<= int(ora) and int(interval[1]) >=int(ora):
+                return {'activitate_id': act.id}, 200
+        return 'Activitate neinregistrata in acest interval orar',404
 
 api.add_resource(Home, '/home')
 api.add_resource(Scan, '/scan')
+api.add_resource(GenerateQR, '/generare_qr')
 api.add_resource(ListaPrezenta, '/prezenta/<int:activitate_id>')
 api.add_resource(ListaPrezentaData, '/dati/<int:activitate_id>')
 api.add_resource(Login, '/login')
