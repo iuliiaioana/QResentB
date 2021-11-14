@@ -247,14 +247,14 @@ class Scan(Resource):
 
         zi=now.strftime("%d.%m.%Y")
         ora=now.strftime("%H:%M")
-        if (now-ora_qr_dt).total_seconds() / 60 < 5: #mai mult de 5 min nu permitem scanarea
+        if (now-ora_qr_dt).total_seconds() / 60 < 15: #mai mult de 5 min nu permitem scanarea
 
-            return 'Scanare cu succes!',200
             prez_act=PrezentaActivitate(ora_validare=ora,id_activitate=activitate, data=zi,locatie=oras, lat=lat, long=long)
             db.session.add(prez_act)
             user=User.query.get_or_404(user_id)
             user.prezenta_activ.append(prez_act)
             db.session.commit()
+            return 'Scanare cu succes!',200
             
  
         return 'Scanare esuata!',403
