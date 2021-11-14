@@ -244,15 +244,19 @@ class Scan(Resource):
         lat=request.json['lat'] if 'lat' in request.json else None
         long=request.json['long'] if 'long' in request.json else None
         now = datetime.now()
+
         zi=now.strftime("%d.%m.%Y")
         ora=now.strftime("%H:%M")
-        if (now-ora_qr_dt).total_seconds()/60<5: #mai mult de 5 min nu permitem scanarea
+        if (now-ora_qr_dt).total_seconds() / 60 < 5: #mai mult de 5 min nu permitem scanarea
+
+            return 'Scanare cu succes!',200
             prez_act=PrezentaActivitate(ora_validare=ora,id_activitate=activitate, data=zi,locatie=oras, lat=lat, long=long)
             db.session.add(prez_act)
             user=User.query.get_or_404(user_id)
             user.prezenta_activ.append(prez_act)
             db.session.commit()
-            return 'Scanare cu succes!',200
+            
+ 
         return 'Scanare esuata!',403
 
 class ListaPrezenta(Resource):
@@ -294,14 +298,16 @@ class ListaPrezentaData(Resource):
 class GenerateQR(Resource):
     def post(self):
         profesor=request.json['profesor_id']
+        
         zi_dict={'Monday' : 'luni','Tuesday' : 'marti','Wednesday' : 'miercuri','Thursday' : 'joi','Friday' : 'vineri','Sunday' : 'duminica'}
         now = datetime.now()
         ora=now.strftime("%H")
         ziua=zi_dict[now.strftime("%A")]
         activitati= Activitate.query.filter((Activitate.id_materie == Materie.id) & (Materie.id_profesor == profesor) & (Activitate.zi == ziua)).all()
+
         for act in activitati:
             interval= str(act.interval).split(":")
-            if int(interval[0])<= int(ora) and int(interval[1]) >=int(ora):
+            if int(interval[0]) <= int(ora) and int(interval[0]) + 2 >= int(ora):
                 return {'activitate_id': act.id}, 200
         return 'Activitate neinregistrata in acest interval orar',404
 
