@@ -72,9 +72,17 @@ BD:
 | :-------- | :------- | :-------------------------------- |
 | `activitate_id`      | `int` | **Required** Activitatea de la care se doreste zilele disponibile pentru prezenta |
 
+## Instalarea proiectului
 
+```bash
+  git clone https://github.com/iuliiaioana/QResentB.git
+  cd QResentB
+  pip install -r requirements.txt
+  
+```
+    
 
-## Autori
+## Echipa dezvoltare
 - [@Iulia Anghel](https://github.com/iuliiaioana) PM
 - [@Lucian Roinita](https://github.com/roinitalucian) TEAM LEAD
 - [@Dragos Calin](https://github.com/CalinDS) FE 
