@@ -27,11 +27,6 @@ db = SQLAlchemy(app)
 from models import Activitate,activitate_schema, user_prezenta, materie_schema,user_schema,users_schema, ActivitatiMaterieSchema, UserSchema, user_prezenta,MaterieSchema,Activitate, Materie, PrezentaActivitate, User
 db.create_all()
 
-class Home(Resource):
-    def get(self):
-        return "Hello", 200
-
-
 stats_data = {} # Prezentele unei activitati, generate de qr, cu data fisei de prezenta ca si cheie. Ca valori vom avea
 # activitatea ca si cheie si ca valoare toate prezentele.
 
@@ -269,15 +264,19 @@ class Scan(Resource):
         lat=request.json['lat'] if 'lat' in request.json else None
         long=request.json['long'] if 'long' in request.json else None
         now = datetime.now()
+
         zi=now.strftime("%d.%m.%Y")
         ora=now.strftime("%H:%M")
-        if (now-ora_qr_dt).total_seconds()/60<5: #mai mult de 5 min nu permitem scanarea
+        if (now-ora_qr_dt).total_seconds() / 60 < 15: #mai mult de 5 min nu permitem scanarea
+
             prez_act=PrezentaActivitate(ora_validare=ora,id_activitate=activitate, data=zi,locatie=oras, lat=lat, long=long)
             db.session.add(prez_act)
             user=User.query.get_or_404(user_id)
             user.prezenta_activ.append(prez_act)
             db.session.commit()
             return 'Scanare cu succes!',200
+            
+ 
         return 'Scanare esuata!',403
 
 class ListaPrezenta(Resource):
@@ -319,23 +318,23 @@ class ListaPrezentaData(Resource):
 class GenerateQR(Resource):
     def post(self):
         profesor=request.json['profesor_id']
+        
         zi_dict={'Monday' : 'luni','Tuesday' : 'marti','Wednesday' : 'miercuri','Thursday' : 'joi','Friday' : 'vineri','Sunday' : 'duminica'}
         now = datetime.now()
         ora=now.strftime("%H")
         ziua=zi_dict[now.strftime("%A")]
         activitati= Activitate.query.filter((Activitate.id_materie == Materie.id) & (Materie.id_profesor == profesor) & (Activitate.zi == ziua)).all()
+
         for act in activitati:
             interval= str(act.interval).split(":")
-            if int(interval[0])<= int(ora) and int(interval[1]) >=int(ora):
+            if int(interval[0]) <= int(ora) and int(interval[0]) + 2 >= int(ora):
                 return {'activitate_id': act.id}, 200
         return 'Activitate neinregistrata in acest interval orar',404
 
-api.add_resource(Home, '/home')
 api.add_resource(Scan, '/scan')
 api.add_resource(GenerateQR, '/generare_qr')
 api.add_resource(ListaPrezenta, '/prezenta/<int:activitate_id>')
 api.add_resource(ListaPrezentaData, '/dati/<int:activitate_id>')
-api.add_resource(Login, '/login')
 api.add_resource(Stats, '/stats')
 api.add_resource(MaterieView, '/materii')
 api.add_resource(MaterieDetail, '/materie/<int:materie_id>')
@@ -343,7 +342,3 @@ api.add_resource(UserView,'/users')
 api.add_resource(UserDetail,'/user/<int:user_id>')
 api.add_resource(ActivitateView,'/activitati')
 api.add_resource(ActivitateDetail,'/activitate/<int:activitate_id>')
-
-
-if __name__ == '__main__':
-    app.run()
