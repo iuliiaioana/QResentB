@@ -9,7 +9,6 @@ from flask_cors import CORS, cross_origin
 from flask.views import View
 from flask_jwt_extended import JWTManager
 from flask_sqlalchemy import SQLAlchemy
-from routes.login import Login
 from marshmallow import Schema, fields, ValidationError, pre_load
 
 app = Flask(__name__)
@@ -27,11 +26,6 @@ api = Api(app)
 db = SQLAlchemy(app)
 from models import Activitate,activitate_schema, user_prezenta, materie_schema,user_schema,users_schema, ActivitatiMaterieSchema, UserSchema, user_prezenta,MaterieSchema,Activitate, Materie, PrezentaActivitate, User
 db.create_all()
-
-class Home(Resource):
-    def get(self):
-        return "Hello", 200
-
 
 stats_data = {} # Prezentele unei activitati, generate de qr, cu data fisei de prezenta ca si cheie. Ca valori vom avea
 # activitatea ca si cheie si ca valoare toate prezentele.
@@ -305,12 +299,10 @@ class GenerateQR(Resource):
                 return {'activitate_id': act.id}, 200
         return 'Activitate neinregistrata in acest interval orar',404
 
-api.add_resource(Home, '/home')
 api.add_resource(Scan, '/scan')
 api.add_resource(GenerateQR, '/generare_qr')
 api.add_resource(ListaPrezenta, '/prezenta/<int:activitate_id>')
 api.add_resource(ListaPrezentaData, '/dati/<int:activitate_id>')
-api.add_resource(Login, '/login')
 api.add_resource(Stats, '/stats')
 api.add_resource(MaterieView, '/materii')
 api.add_resource(MaterieDetail, '/materie/<int:materie_id>')
@@ -318,7 +310,3 @@ api.add_resource(UserView,'/users')
 api.add_resource(UserDetail,'/user/<int:user_id>')
 api.add_resource(ActivitateView,'/activitati')
 api.add_resource(ActivitateDetail,'/activitate/<int:activitate_id>')
-
-
-if __name__ == '__main__':
-    app.run()
