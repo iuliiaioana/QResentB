@@ -1,9 +1,8 @@
   # QResent
 
-QResent este o aplicatie de tip mobile care vine in intampinarea problemelor degitalizarii sistemului educational. Aceasta este adresata atat studentilor, profesorilor si adminitratorii
-institutiilor inregistrate. In functie de rolul utilizatorilui aplicatia ofera utilizatorilor sai avantaje, precum: 
+QResent este o aplicatie de tip mobile ce vine in intampinarea problemelor digitalizarii sistemului educational. Aceasta este adresata atat studentilor, profesorilor cat si a adminitratorilor inregistrati. In functie de rolul utilizatorului aplicatia ofera diverse avantaje, precum: 
   - urmarire atenta a informatiilor de actualitate si a statisticilor oferite de fiecare materie
-  - un sistem de identificare a studentilor prezenti in cadrul activitatiilor prin cod QR
+  - un sistem de identificare a studentilor prezenti in cadrul activitatiilor prin scanarea codurilor QR
   - configurarea materiilor (informatii utile: cerinte minime, intervale orare)
   - descarcarea listelor de prezente pentru orice activitate din trecut
 
