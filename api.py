@@ -3,13 +3,12 @@ import pandas as pd
 from datetime import datetime,timedelta
 import requests
 import json
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_restful import Api, Resource
 from flask_cors import CORS, cross_origin
 from flask.views import View
-from flask_jwt_extended import JWTManager
+from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token, jwt_required
 from flask_sqlalchemy import SQLAlchemy
-from routes.login import Login
 from marshmallow import Schema, fields, ValidationError, pre_load
 
 app = Flask(__name__)
@@ -35,6 +34,32 @@ class Home(Resource):
 
 stats_data = {} # Prezentele unei activitati, generate de qr, cu data fisei de prezenta ca si cheie. Ca valori vom avea
 # activitatea ca si cheie si ca valoare toate prezentele.
+
+class Login(Resource):
+    def post(self):
+        data = request.get_json()
+
+        email = data.get('email')
+        password = data.get('password')
+
+        user_id = self.check_credentials(email, password)
+        if  user_id > 0:
+            access_token = create_access_token(identity=email)
+            refresh_token = create_refresh_token(identity=email)
+
+            return jsonify(
+                {
+                    "access_token": access_token,
+                    "refresh_token": refresh_token,
+                    "user_id": user_id
+                }
+            )
+
+        return "bad credentials", 401
+
+    def check_credentials(self, email, password):
+        user = User.query.filter(User.email == email).one_or_none()
+        return user.id if user.parola == password else -1
 
 class Stats(Resource):
     def generate_statistics(self, prezenta_activitate_id):
