@@ -7,12 +7,9 @@ QResent este o aplicatie de tip mobile ce vine in intampinarea problemelor digit
   - descarcarea listelor de prezente pentru orice activitate din trecut
 
 ## Tehnologii
-FE:
-- [FrontendRepo](https://github.com/iuliiaioana/QResentF)
+[Frontend](https://github.com/iuliiaioana/QResentF)
   
-
-BE: 
-- [BackendRepo](https://github.com/iuliiaioana/QResentB)
+[Backend](https://github.com/iuliiaioana/QResentB)
 - [Pyton 3.8.10](https://www.python.org/downloads/release/python-3810/)
 - [PEP8](https://www.python.org/dev/peps/pep-0008/)
 - [Flask](https://flask.palletsprojects.com/en/2.0.x/)
@@ -22,8 +19,10 @@ BE:
 - [Deploy with Heroku](https://www.heroku.com/home)
 
 
-BD:
+Baza de Date:
+  - [SQLite](https://www.sqlite.org/index.html)
   - [Flask-SQLAlchemy](https://flask-sqlalchemy.palletsprojects.com/en/2.x/)
+  - [DB Browser for SQLite](https://sqlitebrowser.org/)
 
 ## Arhitectura BD
 
@@ -82,7 +81,10 @@ BD:
   pip install -r requirements.txt
   
 ```
-    
+
+## Documentatie
+
+[Documentatie](https://docs.google.com/document/d/1TDuirgfmvJI1fCM7e3zsZY7MwS0vCSaKm8aOa0JYNRM/edit)    
 
 ## Echipa dezvoltare
 - [@Iulia Anghel](https://github.com/iuliiaioana) PM
