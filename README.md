@@ -8,9 +8,11 @@ QResent este o aplicatie de tip mobile ce vine in intampinarea problemelor digit
 
 ## Tehnologii
 FE:
+- [FrontendRepo](https://github.com/iuliiaioana/QResentF)
   
 
-BE:
+BE: 
+- [BackendRepo](https://github.com/iuliiaioana/QResentB)
 - [Pyton 3.8.10](https://www.python.org/downloads/release/python-3810/)
 - [PEP8](https://www.python.org/dev/peps/pep-0008/)
 - [Flask](https://flask.palletsprojects.com/en/2.0.x/)
@@ -85,9 +87,9 @@ BD:
 ## Echipa dezvoltare
 - [@Iulia Anghel](https://github.com/iuliiaioana) PM
 - [@Lucian Roinita](https://github.com/roinitalucian) TEAM LEAD
-- [@Dragos Calin](https://github.com/CalinDS) FE 
-- [@Roberta Calin](https://github.com/robertacalin) FE 
-- [@Vlad Radutoiu](https://github.com/VladRadutoiu) FE 
-- [@Lavinia Nedela](https://github.com/laviniamnedelea) BE
+- [@Dragos Calin](https://github.com/CalinDS) FE Developer + Tester
+- [@Roberta Calin](https://github.com/robertacalin) FE Developer
+- [@Vlad Radutoiu](https://github.com/VladRadutoiu) FE Developer
+- [@Lavinia Nedela](https://github.com/laviniamnedelea) BE Developer
 
 
