@@ -1,12 +1,15 @@
 from collections import defaultdict
-
-from flask import Flask, request
+import pandas as pd
+from datetime import datetime,timedelta
+import requests
+import json
+from flask import Flask, request, jsonify
 from flask_restful import Api, Resource
 from flask_cors import CORS, cross_origin
 from flask.views import View
-from flask_jwt_extended import JWTManager
+from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token, jwt_required
 from flask_sqlalchemy import SQLAlchemy
-#from routes.login import Login
+
 from marshmallow import Schema, fields, ValidationError, pre_load
 
 app = Flask(__name__)
@@ -22,16 +25,37 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
 api = Api(app)
 db = SQLAlchemy(app)
-from models import Activitate,activitate_schema, materie_schema,user_schema,users_schema, ActivitatiMaterieSchema, UserSchema, user_prezenta,MaterieSchema,Activitate, Materie, PrezentaActivitate, User
+from models import Activitate,activitate_schema, user_prezenta, materie_schema,user_schema,users_schema, ActivitatiMaterieSchema, UserSchema, user_prezenta,MaterieSchema,Activitate, Materie, PrezentaActivitate, User
 db.create_all()
-
-class Home(Resource):
-    def get(self):
-        return "Hello", 200
-
 
 stats_data = {} # Prezentele unei activitati, generate de qr, cu data fisei de prezenta ca si cheie. Ca valori vom avea
 # activitatea ca si cheie si ca valoare toate prezentele.
+
+class Login(Resource):
+    def post(self):
+        data = request.get_json()
+
+        email = data.get('email')
+        password = data.get('password')
+
+        user_id = self.check_credentials(email, password)
+        if  user_id > 0:
+            access_token = create_access_token(identity=email)
+            refresh_token = create_refresh_token(identity=email)
+
+            return jsonify(
+                {
+                    "access_token": access_token,
+                    "refresh_token": refresh_token,
+                    "user_id": user_id
+                }
+            )
+
+        return "bad credentials", 401
+
+    def check_credentials(self, email, password):
+        user = User.query.filter(User.email == email).one_or_none()
+        return user.id if user.parola == password else -1
 
 class Stats(Resource):
     def generate_statistics_qr_activity(self, prezenta_activitate_id):
@@ -41,7 +65,7 @@ class Stats(Resource):
 
         start_treshold = (int(act.interval[3:5])- int(act.interval[0:2]))*6 # Primele minute care sunt csd "inceputul activitatii"
         end_treshold = (int(act.interval[3:5]) - int(act.interval[0:2]))*54 # Ultimele minute care sunt csd "sfarsitul activitatii"
-        minut_generare =  (int(prezenta_act.ora_generare[0:2])-int(act.interval[0:2]))*60 + int(prezenta_act.ora_generare[3:5])
+        minut_generare =  (int(prezenta_act.ora_validare[0:2])-int(act.interval[0:2]))*60 + int(prezenta_act.ora_validare[3:5])
 
         id_act = act.id
         if id_act not in stats_data.keys():
@@ -198,6 +222,9 @@ class ActivitateView(Resource):
         return response, 200
     
     def post(self):
+        """
+        *Required request body: interval <hour:hour>, id_materie ! , zi, grupa
+        """
         data = request.get_json()
         try:
             data=activitate_schema.load(request.get_json())
@@ -236,9 +263,93 @@ class ActivitateDetail(Resource):
         db.session.commit()
         return '',204
 
+class Scan(Resource):
+    """
+    *Required request body: activitate_id, user_id, ora_qr <format:2021-11-14T17:13:53.883Z> 
+    optional: locatie, lat, long
 
-api.add_resource(Home, '/home')
-#api.add_resource(Login, '/login')
+    """
+    def post(self):
+        activitate=request.json['activitate_id']
+        date_format_str = '%Y-%m-%dT%H:%M:%S'
+        ora_qr_dt=pd.to_datetime(request.json['ora_qr'][:-1], format=date_format_str)
+        user_id=request.json['user_id']
+        oras=request.json['locatie'] if 'locatie' in request.json else None
+        lat=request.json['lat'] if 'lat' in request.json else None
+        long=request.json['long'] if 'long' in request.json else None
+        now = datetime.now()
+
+        zi=now.strftime("%d.%m.%Y")
+        ora=now.strftime("%H:%M")
+        if (now-ora_qr_dt).total_seconds() / 60 < 15: #mai mult de 5 min nu permitem scanarea
+
+            prez_act=PrezentaActivitate(ora_validare=ora,id_activitate=activitate, data=zi,locatie=oras, lat=lat, long=long)
+            db.session.add(prez_act)
+            user=User.query.get_or_404(user_id)
+            user.prezenta_activ.append(prez_act)
+            db.session.commit()
+            return 'Scanare cu succes!',200
+            
+ 
+        return 'Scanare esuata!',403
+
+class ListaPrezenta(Resource):
+    """
+    Export to File
+    *Required field: data : <selected_date> (make a get request-/data/<int:activitate_id>- to get all the dates and let user select a date)
+
+    """
+    def get(self, activitate_id):
+        response={}
+        data_selectata=request.json['data']
+        a = Activitate.query.get_or_404(activitate_id)
+        response['interval_activitate'] = a.interval
+        m = Materie.query.get_or_404(a.id_materie)
+        response['materie'] = m.nume
+        response['zi'] = a.zi
+        response['grupa'] = a.grupa
+        response['student'] = []
+        for activitate_prezenta in a.prezente:
+            student = {}
+            user = User.query.join(user_prezenta).join(PrezentaActivitate).filter((user_prezenta.c.user_id == User.id) & (user_prezenta.c.prezenta_id == activitate_prezenta.id) & (activitate_prezenta.data == data_selectata)).first()
+            if user:
+                student['nume'] = user.nume + " " + user.prenume
+                student['email'] = user.email
+                student['ora_validare'] = activitate_prezenta.ora_validare
+                student['locatie'] = activitate_prezenta.locatie + "(lat: " + activitate_prezenta.lat + " long: " + activitate_prezenta.long + ")"
+                response['student'].append(student)
+        return response,200
+
+class ListaPrezentaData(Resource):
+    """
+    Get all dates for a past activity
+    """
+    def get(self,activitate_id):
+        prezenta_zi=PrezentaActivitate.query.filter(PrezentaActivitate.id_activitate==activitate_id).group_by(PrezentaActivitate.data)
+        response=list(zi.data for zi in prezenta_zi)
+        return response,200
+        
+class GenerateQR(Resource):
+    def post(self):
+        profesor=request.json['profesor_id']
+        
+        zi_dict={'Monday' : 'luni','Tuesday' : 'marti','Wednesday' : 'miercuri','Thursday' : 'joi','Friday' : 'vineri','Sunday' : 'duminica'}
+        now = datetime.now()
+        ora=now.strftime("%H")
+        ziua=zi_dict[now.strftime("%A")]
+        activitati= Activitate.query.filter((Activitate.id_materie == Materie.id) & (Materie.id_profesor == profesor) & (Activitate.zi == ziua)).all()
+
+        for act in activitati:
+            interval= str(act.interval).split(":")
+            if int(interval[0]) <= int(ora) and int(interval[0]) + 2 >= int(ora):
+                return {'activitate_id': act.id}, 200
+        return 'Activitate neinregistrata in acest interval orar',404
+
+api.add_resource(Scan, '/scan')
+api.add_resource(Login, '/login')
+api.add_resource(GenerateQR, '/generare_qr')
+api.add_resource(ListaPrezenta, '/prezenta/<int:activitate_id>')
+api.add_resource(ListaPrezentaData, '/dati/<int:activitate_id>')
 api.add_resource(Stats, '/stats')
 api.add_resource(MaterieView, '/materii')
 api.add_resource(MaterieDetail, '/materie/<int:materie_id>')
@@ -246,7 +357,3 @@ api.add_resource(UserView,'/users')
 api.add_resource(UserDetail,'/user/<int:user_id>')
 api.add_resource(ActivitateView,'/activitati')
 api.add_resource(ActivitateDetail,'/activitate/<int:activitate_id>')
-
-
-if __name__ == '__main__':
-    app.run()

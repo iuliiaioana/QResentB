@@ -26,7 +26,7 @@ class User(db.Model):
     grupa = db.Column(db.String(20), nullable=False)
     prezente = db.Column(db.String(100), nullable=False)
     prezenta_activ = db.relationship('PrezentaActivitate', secondary=user_prezenta, lazy='subquery',
-                                     backref=db.backref('useri', lazy=True))
+                                     backref=db.backref('useri', lazy='joined'))
 
     def __init__(self, nume='', prenume='', rol='', parola='', email='@stud.acs.pub.ro', grupa='', prezente=''):
         self.nume = nume
@@ -46,14 +46,21 @@ class User(db.Model):
 
 class PrezentaActivitate(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    ora_generare = db.Column(db.String(100), nullable=False)
+    ora_validare = db.Column(db.String(100), nullable=False)
     id_activitate = db.Column(db.Integer, db.ForeignKey(
         'activitate.id'), nullable=False)
     data = db.Column(db.String(100), nullable=False)
+    locatie = db.Column(db.String(100), nullable=False, default='')
+    lat = db.Column(db.String(100), nullable=False, default='')
+    long = db.Column(db.String(100), nullable=False, default='')
 
-    def __init__(self, ora_generare, data):
-        self.ora_generare = ora_generare
+    def __init__(self, ora_validare, id_activitate, data, locatie, lat, long):
+        self.ora_validare = ora_validare
         self.data = data
+        self.id_activitate = id_activitate
+        self.locatie = locatie
+        self.lat = lat
+        self.long = long
 
 
 class Activitate(db.Model):
