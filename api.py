@@ -6,7 +6,7 @@ from flask_cors import CORS, cross_origin
 from flask.views import View
 from flask_jwt_extended import JWTManager
 from flask_sqlalchemy import SQLAlchemy
-from routes.login import Login
+#from routes.login import Login
 from marshmallow import Schema, fields, ValidationError, pre_load
 
 app = Flask(__name__)
@@ -34,7 +34,7 @@ stats_data = {} # Prezentele unei activitati, generate de qr, cu data fisei de p
 # activitatea ca si cheie si ca valoare toate prezentele.
 
 class Stats(Resource):
-    def generate_statistics(self, prezenta_activitate_id):
+    def generate_statistics_qr_activity(self, prezenta_activitate_id):
         act_stat = defaultdict(list, {k: 0 for k in ('inceput', 'aleator', 'final')})
         prezenta_act = PrezentaActivitate.query.get(prezenta_activitate_id)
         act = Activitate.query.get(prezenta_act.id_activitate)
@@ -64,6 +64,19 @@ class Stats(Resource):
             if str(prezenta_act.data) not in stats_data[id_act].keys():
                 stats_data[id_act][str(prezenta_act.data)] = act_stat
             stats_data[id_act][str(prezenta_act.data)]['aleator'] = no
+
+    # Generate how many users were present in total per given activity, at any moment of QR generation.
+    def generate_statistics_users_per_activity_date(self,id_activitate,data):
+        id_prezente = db.session.query(PrezentaActivitate).filter(PrezentaActivitate.id_activitate == id_activitate and PrezentaActivitate.data == data).all()
+        prezente = []
+        print(id_prezente)
+        for i in id_prezente:
+            print(i)
+            entries_user_prezenta = db.session.query(user_prezenta).filter(user_prezenta.c.prezenta_id == i.id).all()
+            print(entries_user_prezenta)
+            if entries_user_prezenta:
+                prezente += [x[0] for x in entries_user_prezenta]
+        return len(set(prezente))
 
     def get(self):
         return "Statistici"
@@ -225,7 +238,7 @@ class ActivitateDetail(Resource):
 
 
 api.add_resource(Home, '/home')
-api.add_resource(Login, '/login')
+#api.add_resource(Login, '/login')
 api.add_resource(Stats, '/stats')
 api.add_resource(MaterieView, '/materii')
 api.add_resource(MaterieDetail, '/materie/<int:materie_id>')
