@@ -332,6 +332,7 @@ class GenerateQR(Resource):
         return 'Activitate neinregistrata in acest interval orar',404
 
 api.add_resource(Scan, '/scan')
+api.add_resource(Login, '/login')
 api.add_resource(GenerateQR, '/generare_qr')
 api.add_resource(ListaPrezenta, '/prezenta/<int:activitate_id>')
 api.add_resource(ListaPrezentaData, '/dati/<int:activitate_id>')
