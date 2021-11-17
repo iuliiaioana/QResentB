@@ -89,11 +89,10 @@ class Stats(Resource):
                 stats_data[id_act][str(prezenta_act.data)] = act_stat
             stats_data[id_act][str(prezenta_act.data)]['aleator'] = no
 
-    # Generate how many users were present in total per given activity, at any moment of QR generation.
+    # Cati useri au fost prezenti in total intr-o zi la o anumita activitate, indiferent de momentul in care s-au marcat prezenti.
     def generate_statistics_users_per_activity_date(self,id_activitate,data):
         id_prezente = db.session.query(PrezentaActivitate).filter(PrezentaActivitate.id_activitate == id_activitate and PrezentaActivitate.data == data).all()
         prezente = []
-        print(id_prezente)
         for i in id_prezente:
             print(i)
             entries_user_prezenta = db.session.query(user_prezenta).filter(user_prezenta.c.prezenta_id == i.id).all()
@@ -101,6 +100,27 @@ class Stats(Resource):
             if entries_user_prezenta:
                 prezente += [x[0] for x in entries_user_prezenta]
         return len(set(prezente))
+
+    # Cate materii preda fiecare profesor
+    def generate_statistics_prof_per_subject(self): # {id_prof : no_subjects}
+        id_profs = list(set(db.session.query(Materie.id_profesor).all()))
+        prof_subj = {}
+        for i in id_profs:
+            id_subjects = db.session.query(Materie).filter(Materie.id_profesor == i[0]).all()
+            prof_subj[i[0]] = len(id_subjects)
+        return prof_subj
+
+    # Cati elevi de la fiecare grupa au fost prezenti la o activitate (in orice moment al ei)
+    def generate_statistics_users_gr_per_activity_date(self, id_activitate, data): # {grupa : nr_participanti}
+        id_prezente = db.session.query(PrezentaActivitate).filter(
+            PrezentaActivitate.id_activitate == id_activitate and PrezentaActivitate.data == data).all()
+        gr_no = defaultdict(int) # dictionar corespunzator grupei si nr de participanti
+        for i in id_prezente:
+            entries_user_prezenta = db.session.query(user_prezenta).filter(user_prezenta.c.prezenta_id == i.id).all()
+            for k in entries_user_prezenta:
+                entry = db.session.query(User).filter(User.id == k[0]) .all()
+                gr_no[entry[0].grupa] += 1
+        return gr_no
 
     def get(self):
         return "Statistici"
