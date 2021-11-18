@@ -19,13 +19,25 @@ QResent este o aplicatie de tip mobile ce vine in intampinarea problemelor digit
 - [Deploy with Heroku](https://www.heroku.com/home)
 
 
-Baza de Date:
+[Baza de Date](https://drawsql.app/asdas-2/diagrams/mps):
   - [SQLite](https://www.sqlite.org/index.html)
   - [Flask-SQLAlchemy](https://flask-sqlalchemy.palletsprojects.com/en/2.x/)
   - [DB Browser for SQLite](https://sqlitebrowser.org/)
+ 
+## Instalarea proiectului
+
+```bash
+  git clone https://github.com/iuliiaioana/QResentB.git
+  cd QResentB
+  pip install -r requirements.txt
+```
+
+## Arhitectura Aplicatie
+![](App_Arhitectura.jpg)
+
 
 ## Arhitectura BD
-
+![](diagrama_BD.png)
 
 
 ## API 
@@ -73,14 +85,7 @@ Baza de Date:
 | :-------- | :------- | :-------------------------------- |
 | `activitate_id`      | `int` | **Required** Activitatea de la care se doreste zilele disponibile pentru prezenta |
 
-## Instalarea proiectului
 
-```bash
-  git clone https://github.com/iuliiaioana/QResentB.git
-  cd QResentB
-  pip install -r requirements.txt
-  
-```
 
 ## Documentatie
 
@@ -92,6 +97,6 @@ Baza de Date:
 - [@Dragos Calin](https://github.com/CalinDS) FE Developer + Tester
 - [@Roberta Calin](https://github.com/robertacalin) FE Developer
 - [@Vlad Radutoiu](https://github.com/VladRadutoiu) FE Developer
-- [@Lavinia Nedela](https://github.com/laviniamnedelea) BE Developer
+- [@Lavinia Nedelea](https://github.com/laviniamnedelea) BE Developer
 
 

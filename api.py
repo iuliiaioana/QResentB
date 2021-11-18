@@ -35,7 +35,6 @@ stats_data = {} # Prezentele unei activitati, generate de qr, cu data fisei de p
 class Login(Resource):
     def post(self):
         data = request.get_json()
-
         email = data.get('email')
         password = data.get('password')
 
@@ -218,6 +217,7 @@ class MaterieDetail(Resource):
         return '',204
 
 class UserView(Resource):
+    @jwt_required()
     def get(self):
         users = User.query.all()
         return users_schema.jsonify(users)
@@ -396,6 +396,22 @@ class GenerateQR(Resource):
                 return {'activitate_id': act.id}, 200
         return 'Activitate neinregistrata in acest interval orar',404
 
+class GasesteActivitate(Resource):
+    """
+    Dupa profesor_id ofera toate activitatiile aferente materiilor pe care le preda 
+
+    Returneaza: { <materie_nume>_<zi>_<interval> : <activitate_id> ...}
+    """
+    def get(self,profesor_id):
+        activitati_profesor={}
+        materii_profesor = Materie.query.filter(Materie.id_profesor == profesor_id).all()
+        for materie in materii_profesor:
+            activitati_materie = Activitate.query.filter(Activitate.id_materie == materie.id).all()
+            for activitate in activitati_materie:
+                key= materie.nume + '_' + activitate.zi + '_' + activitate.interval
+                activitati_profesor[key]= activitate.id
+        return activitati_profesor, 200
+
 api.add_resource(Scan, '/scan')
 api.add_resource(Login, '/login')
 api.add_resource(GenerateQR, '/generare_qr')
@@ -408,3 +424,4 @@ api.add_resource(UserView,'/users')
 api.add_resource(UserDetail,'/user/<int:user_id>')
 api.add_resource(ActivitateView,'/activitati')
 api.add_resource(ActivitateDetail,'/activitate/<int:activitate_id>')
+api.add_resource(GasesteActivitate,'/activitati_profesor/<int:profesor_id>')
