@@ -1,3 +1,4 @@
+import copy
 from collections import defaultdict
 import pandas as pd
 from datetime import datetime,timedelta
@@ -60,8 +61,8 @@ class Login(Resource):
 class Stats(Resource):
     def generate_statistics_qr_activity(self, prezenta_activitate_id):
         act_stat = defaultdict(list, {k: 0 for k in ('inceput', 'aleator', 'final')})
-        prezenta_act = PrezentaActivitate.query.get(prezenta_activitate_id)
-        act = Activitate.query.get(prezenta_act.id_activitate)
+        prezenta_act = PrezentaActivitate.query.get_or_404(prezenta_activitate_id)
+        act = Activitate.query.get_or_404(prezenta_act.id_activitate)
 
         start_treshold = (int(act.interval[3:5])- int(act.interval[0:2]))*6 # Primele minute care sunt csd "inceputul activitatii"
         end_treshold = (int(act.interval[3:5]) - int(act.interval[0:2]))*54 # Ultimele minute care sunt csd "sfarsitul activitatii"
@@ -69,34 +70,33 @@ class Stats(Resource):
 
         id_act = act.id
         if id_act not in stats_data.keys():
-            stats_data[id_act] = {}
+            stats_data[id_act] = defaultdict(int)
 
         if minut_generare<=start_treshold:
             no = db.session.query(user_prezenta).filter(user_prezenta.c.prezenta_id==prezenta_activitate_id).count()
             if str(prezenta_act.data) not in stats_data[id_act].keys():
                 stats_data[id_act][str(prezenta_act.data)] = act_stat
-            stats_data[id_act][str(prezenta_act.data)]['inceput'] = no
+            stats_data[id_act][str(prezenta_act.data)]['inceput'] += no
 
         elif minut_generare>=end_treshold:
             no = db.session.query(user_prezenta).filter(user_prezenta.c.prezenta_id==prezenta_activitate_id).count()
             if str(prezenta_act.data) not in stats_data[id_act].keys():
                 stats_data[id_act][str(prezenta_act.data)] = act_stat
-            stats_data[id_act][str(prezenta_act.data)]['final'] = no
+            stats_data[id_act][str(prezenta_act.data)]['final'] += no
 
         else:
             no = db.session.query(user_prezenta).filter(user_prezenta.c.prezenta_id==prezenta_activitate_id).count()
             if str(prezenta_act.data) not in stats_data[id_act].keys():
                 stats_data[id_act][str(prezenta_act.data)] = act_stat
-            stats_data[id_act][str(prezenta_act.data)]['aleator'] = no
+            stats_data[id_act][str(prezenta_act.data)]['aleator'] += no
+        return stats_data
 
     # Cati useri au fost prezenti in total intr-o zi la o anumita activitate, indiferent de momentul in care s-au marcat prezenti.
     def generate_statistics_users_per_activity_date(self,id_activitate,data):
         id_prezente = db.session.query(PrezentaActivitate).filter(PrezentaActivitate.id_activitate == id_activitate and PrezentaActivitate.data == data).all()
         prezente = []
         for i in id_prezente:
-            print(i)
             entries_user_prezenta = db.session.query(user_prezenta).filter(user_prezenta.c.prezenta_id == i.id).all()
-            print(entries_user_prezenta)
             if entries_user_prezenta:
                 prezente += [x[0] for x in entries_user_prezenta]
         return len(set(prezente))
@@ -115,16 +115,47 @@ class Stats(Resource):
         id_prezente = db.session.query(PrezentaActivitate).filter(
             PrezentaActivitate.id_activitate == id_activitate and PrezentaActivitate.data == data).all()
         gr_no = defaultdict(int) # dictionar corespunzator grupei si nr de participanti
+        students_id = []
         for i in id_prezente:
-            entries_user_prezenta = db.session.query(user_prezenta).filter(user_prezenta.c.prezenta_id == i.id).all()
+            entries_user_prezenta = db.session.query(user_prezenta).filter(user_prezenta.c.prezenta_id == i.id).all() # Cautam inregistrarile de prezente de pe prezenta data
             for k in entries_user_prezenta:
-                entry = db.session.query(User).filter(User.id == k[0]) .all()
-                gr_no[entry[0].grupa] += 1
+                students_id.append(k.user_id)
+        students_id = set(students_id)
+        for k in students_id:
+            entry = db.session.query(User).filter(User.id == k).all()
+            gr_no[entry[0].grupa] += 1
         return gr_no
 
     def get(self):
-        return "Statistici"
+        interval=request.json['interval']
+        zi = request.json['zi']
+        id_prof = request.json['id_prof']
+        materie = request.json['materie']
+        data = request.json['data']
 
+        response = {}
+        try:
+            id_materie = db.session.query(Materie).filter(Materie.id_profesor == id_prof).filter(Materie.nume == materie).all()[0].id
+            id_activitate = db.session.query(Activitate).filter(Activitate.interval==interval).filter(Activitate.zi==zi).filter(Activitate.id_materie==id_materie).all()[0].id
+            id_generariPrezente = db.session.query(PrezentaActivitate).filter(PrezentaActivitate.id_activitate==id_activitate).filter(PrezentaActivitate.data==data).all()
+        except:
+            raise("404: NOT FOUND")
+
+        for i in id_generariPrezente:
+            self.generate_statistics_qr_activity(i.id)
+        final_stats = copy.deepcopy(stats_data)
+        stats_data.clear()
+        response['ActDataStatus'] = final_stats
+        stats_total = self.generate_statistics_users_per_activity_date(id_activitate,data)
+        response['TotalPerAct'] = stats_total
+
+        stats_prof = self.generate_statistics_prof_per_subject()
+        response['ProfSubNo'] = stats_prof
+
+        stats_grupa = self.generate_statistics_users_gr_per_activity_date(id_activitate,data)
+        response['GrupaPerAct'] = stats_grupa
+
+        return response
 
 class MaterieView(Resource):
     def post(self):
