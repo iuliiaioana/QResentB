@@ -91,7 +91,8 @@ class Materie(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     descriere = db.Column(db.String(300), nullable=False,
                           default="Disciplina universitara.")
-    id_profesor = db.Column(db.Integer, foreign_key=True)
+    id_profesor = db.Column(db.Integer, db.ForeignKey(
+        'user.id'), nullable=False)
     nume = db.Column(db.String(100), nullable=False)
     activitati = db.relationship(
         'Activitate', backref='materie_univ', lazy=True)

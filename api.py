@@ -34,7 +34,6 @@ stats_data = {} # Prezentele unei activitati, generate de qr, cu data fisei de p
 class Login(Resource):
     def post(self):
         data = request.get_json()
-
         email = data.get('email')
         password = data.get('password')
 
@@ -187,6 +186,7 @@ class MaterieDetail(Resource):
         return '',204
 
 class UserView(Resource):
+    @jwt_required()
     def get(self):
         users = User.query.all()
         return users_schema.jsonify(users)
