@@ -154,7 +154,7 @@ class Stats(Resource):
         stats_grupa = self.generate_statistics_users_gr_per_activity_date(id_activitate,data)
         response['GrupaPerAct'] = stats_grupa
 
-        return response
+        return response, 200
 
 class MaterieView(Resource):
     def post(self):
@@ -412,6 +412,13 @@ class GasesteActivitate(Resource):
                 activitati_profesor[key]= activitate.id
         return activitati_profesor, 200
 
+class Calendar(Resource):
+    def get(self):
+        pass
+
+    def post(self):
+        pass
+
 api.add_resource(Scan, '/scan')
 api.add_resource(Login, '/login')
 api.add_resource(GenerateQR, '/generare_qr')
@@ -425,3 +432,4 @@ api.add_resource(UserDetail,'/user/<int:user_id>')
 api.add_resource(ActivitateView,'/activitati')
 api.add_resource(ActivitateDetail,'/activitate/<int:activitate_id>')
 api.add_resource(GasesteActivitate,'/activitati_profesor/<int:profesor_id>')
+api.add_resource(Calendar, '/calendar')

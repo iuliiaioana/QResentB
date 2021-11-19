@@ -24,18 +24,18 @@ class User(db.Model):
     parola = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
     grupa = db.Column(db.String(20), nullable=False)
-    prezente = db.Column(db.String(100), nullable=False)
+    cnp = db.Column(db.String(100), nullable=False)
     prezenta_activ = db.relationship('PrezentaActivitate', secondary=user_prezenta, lazy='subquery',
                                      backref=db.backref('useri', lazy='joined'))
 
-    def __init__(self, nume='', prenume='', rol='', parola='', email='@stud.acs.pub.ro', grupa='', prezente=''):
+    def __init__(self, nume='', prenume='', rol='', parola='', email='@stud.acs.pub.ro', grupa='', cnp=''):
         self.nume = nume
         self.prenume = prenume
         self.rol = rol
         self.parola = parola
         self.email = email
         self.grupa = grupa
-        self.prezente = prezente
+        self.cnp = cnp
 
     @validates('email')
     def validare_email(self, key, address):
@@ -118,7 +118,7 @@ class MaterieSchema(ma.Schema):
 class UserSchema(ma.Schema):
     class Meta:
         fields = ("id", "nume", "prenume", "rol", "parola",
-                  "email", "grupa", "prezente")
+                  "email", "grupa", "cnp")
         ordered = True
 
 
