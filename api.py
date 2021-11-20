@@ -125,7 +125,7 @@ class Stats(Resource):
             gr_no[entry[0].grupa] += 1
         return gr_no
 
-    def get(self):
+    def post(self):
         interval=request.json['interval']
         zi = request.json['zi']
         id_prof = request.json['id_prof']
