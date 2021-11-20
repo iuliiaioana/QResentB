@@ -347,12 +347,9 @@ class Scan(Resource):
 class ListaPrezenta(Resource):
     """
     Export to File
-    *Required field: data : <selected_date> (make a get request-/data/<int:activitate_id>- to get all the dates and let user select a date)
-
     """
-    def get(self, activitate_id):
+    def get(self, activitate_id,data_selectata):
         response={}
-        data_selectata=request.json['data']
         a = Activitate.query.get_or_404(activitate_id)
         response['interval_activitate'] = a.interval
         m = Materie.query.get_or_404(a.id_materie)
@@ -422,7 +419,7 @@ class Calendar(Resource):
 api.add_resource(Scan, '/scan')
 api.add_resource(Login, '/login')
 api.add_resource(GenerateQR, '/generare_qr')
-api.add_resource(ListaPrezenta, '/prezenta/<int:activitate_id>')
+api.add_resource(ListaPrezenta, '/prezenta/<int:activitate_id>/<string:data_selectata>')
 api.add_resource(ListaPrezentaData, '/dati/<int:activitate_id>')
 api.add_resource(Stats, '/stats')
 api.add_resource(MaterieView, '/materii')
