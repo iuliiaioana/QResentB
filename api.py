@@ -412,11 +412,20 @@ class GasesteActivitate(Resource):
         return activitati_profesor, 200
 
 class Calendar(Resource):
-    def get(self):
-        pass
-
+    
     def post(self):
-        pass
+        user_id = request.json['id']
+        zi = request.json['zi']
+        ans = {}
+        grupa_user = db.session.query(User.grupa).filter(User.id==user_id).first()
+        activitati_user = db.session.query(Activitate).filter(Activitate.grupa == grupa_user[0]).filter(Activitate.zi == zi).all()
+        for i in activitati_user:
+            mat_id = []
+            nume_materie = db.session.query(Materie.nume).filter(Materie.id==i.id_materie).first()
+            mat_id.append(nume_materie[0])
+            mat_id.append(i.id_materie)
+            ans[i.interval] = mat_id
+        return ans
 
 api.add_resource(Scan, '/scan')
 api.add_resource(Login, '/login')
