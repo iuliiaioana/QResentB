@@ -106,7 +106,9 @@ class Stats(Resource):
         prof_subj = {}
         for i in id_profs:
             id_subjects = db.session.query(Materie).filter(Materie.id_profesor == i[0]).all()
-            prof_subj[i[0]] = len(id_subjects)
+            profesor = db.session.query(User.nume, User.prenume).filter(User.id==i[0]).all()
+            nume_profesor = profesor[0][0] + " " + profesor[0][1]
+            prof_subj[nume_profesor] = len(id_subjects)
         return prof_subj
 
     # Cati elevi de la fiecare grupa au fost prezenti la o activitate (in orice moment al ei)
