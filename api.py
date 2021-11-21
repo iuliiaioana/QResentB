@@ -38,7 +38,7 @@ class Login(Resource):
         email = data.get('email')
         password = data.get('password')
 
-        user_id = self.check_credentials(email, password)
+        [user_id, user_rol] = self.check_credentials(email, password)
         if  user_id > 0:
             access_token = create_access_token(identity=email)
             refresh_token = create_refresh_token(identity=email)
@@ -47,7 +47,8 @@ class Login(Resource):
                 {
                     "access_token": access_token,
                     "refresh_token": refresh_token,
-                    "user_id": user_id
+                    "user_id": user_id,
+                    "user_rol": user_rol
                 }
             )
 
@@ -55,7 +56,7 @@ class Login(Resource):
 
     def check_credentials(self, email, password):
         user = User.query.filter(User.email == email).one_or_none()
-        return user.id if user.parola == password else -1
+        return [user.id, user.rol] if user.parola == password else -1
 
 class Stats(Resource):
     def generate_statistics_qr_activity(self, prezenta_activitate_id):
