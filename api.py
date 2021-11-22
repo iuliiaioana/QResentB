@@ -418,15 +418,26 @@ class Calendar(Resource):
         user_id = request.json['id']
         zi = request.json['zi']
         ans = {}
-        grupa_user = db.session.query(User.grupa).filter(User.id==user_id).first()
-        activitati_user = db.session.query(Activitate).filter(Activitate.grupa == grupa_user[0]).filter(Activitate.zi == zi).all()
-        for i in activitati_user:
-            mat_id = []
-            nume_materie = db.session.query(Materie.nume).filter(Materie.id==i.id_materie).first()
-            mat_id.append(nume_materie[0])
-            mat_id.append(i.id_materie)
-            ans[i.interval] = mat_id
-        return ans
+        user = db.session.query(User).filter(User.id == user_id).first()
+        if (user.rol == "student"):
+            grupa_user = user.grupa
+            activitati_user = db.session.query(Activitate).filter(Activitate.grupa == grupa_user).filter(
+                Activitate.zi == zi).all()
+            for i in activitati_user:
+                mat_id = []
+                nume_materie = db.session.query(Materie.nume).filter(Materie.id == i.id_materie).first()
+                mat_id.append(nume_materie[0])
+                mat_id.append(i.id_materie)
+                ans[i.interval] = mat_id
+            return ans
+        else:
+            materii = db.session.query(Materie.nume, Materie.id).filter(Materie.id_profesor == user_id).all()
+            for i in materii:
+                interval = db.session.query(Activitate.interval).filter(Activitate.zi == zi).filter(
+                    Activitate.id_materie == i.id).all()
+                for j in interval:
+                    ans[j[0]] = list(i)
+            return ans
 
 api.add_resource(Scan, '/scan')
 api.add_resource(Login, '/login')
