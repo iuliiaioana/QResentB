@@ -325,6 +325,7 @@ class Scan(Resource):
     """
     def post(self):
         activitate=request.json['activitate_id']
+        a = Activitate.query.get_or_404(activitate)
         date_format_str = '%Y-%m-%dT%H:%M:%S'
         ora_qr_dt=pd.to_datetime(request.json['ora_qr'][:-1], format=date_format_str)
         user_id=request.json['user_id']
