@@ -220,7 +220,7 @@ class MaterieDetail(Resource):
         return '',204
 
 class UserView(Resource):
-    @jwt_required()
+    # @jwt_required()
     def get(self):
         users = User.query.all()
         return users_schema.jsonify(users)
