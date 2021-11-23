@@ -40,11 +40,30 @@ QResent este o aplicatie de tip mobile ce vine in intampinarea problemelor digit
 ```
 
 ## Arhitectura Aplicatie
+Sablonul arhitectural ales pentru dezvoltarea acestui proiect a fost cel de back-end și front-end. 
+
 ![](App_Arhitectura.jpg)
+
+Utilizatorul interacționează cu aplicația prin intermediul paginilor din front-end, unde se colectează inițial datele introduse/cerute de acesta. Pe baza acestora, din front-end se trimit cereri HTTP către back-end.
+În back-end aplicația interacționează cu baza de date și trimite răspunsuri înapoi către front-end pentru a le interfața cu utilizatorul. Acțiuni care se fac din back-end sunt:
+Modificarea bazei de date (ex: la crearea unui nou cont de utilizator se adaugă o nouă intrare în tabela User, la o scanare de QR se adaugă o intrare în tabelele de prezență etc)
+Extragerea datelor din baza de date și trimiterea lor către front-end (ex: la crearea  statisticilor despre prezență, se selectează date din baza de date, se procesează pentru a fi în formatul adecvat pentru crearea de statistici și se transmit către front-end unde se realizează afișarea acestora. 
 
 
 ## Arhitectura BD
 ![](diagrama_BD.png)
+
+Observație: în toate tabelele coloana id este cheie primară.
+
+ <strong>User</strong>– tabelă în care sunt stocați utilizatorii aplicației. În funcție de coloana rol ei pot fi admin, profesor sau student iar asta va modifica valorile altor coloane (de exemplu un profesor va avea null în dreptul coloanei grupa). Celelalte coloane au aceeași utilizare pentru toți utilizatorii, oferind date suplimentare
+ 
+ <strong>Materie</strong> – tabelă în care sunt păstrate informații despre materii, în funcție de profesorul care predă. Ea se leagă de tabela de utilizatori (doar utilizatorii profesori) prin cheia id_profesor și relația user-materie este one to many.
+ 
+ <strong>Activitate</strong> – tabelă în care sunt stocate toate activitățile, adică orele de curs ale materiilor în intervalul de timp alocat. 
+
+<strong>User_prezenta</strong>  – o tabelă intermediară între studenți și tabela propriu-zisă de prezență, în care sunt stocate toate scanările de qr ale unui student
+
+<strong>Prezenta_activitate</strong> – tabelă în care pentru fiecare activitate, se rețin toate scanările ale tuturor studenților prezenți la activitatea respectivă. O scanare din parte unui student ajunge în baza de date ca o intrare în care se află identificatorul activității, ora la care a fost generat QR-ul, ora la care scanarea a ajuns în server și poziția de la care scanarea a fost făcută. Aceste ultime detalii au rolul de a asigura un mecanism antifraudă, atât pentru mediul online cât și pentru fizic.
 
 
 ## API 
