@@ -8,6 +8,13 @@ QResent este o aplicatie de tip mobile ce vine in intampinarea problemelor digit
 
 ## Tehnologii
 [Frontend](https://github.com/iuliiaioana/QResentF)
+- [React 17](https://reactjs.org/blog/2020/10/20/react-v17.html)
+- [MUI](https://mui.com)
+- [Ant Design](https://ant.design)
+- [QR React](https://www.npmjs.com/package/react-qr-code)
+- [ReactDOM](https://reactjs.org/docs/react-dom.html)
+- [Testing Library](https://testing-library.com)
+
   
 [Backend](https://github.com/iuliiaioana/QResentB)
 - [Pyton 3.8.10](https://www.python.org/downloads/release/python-3810/)
